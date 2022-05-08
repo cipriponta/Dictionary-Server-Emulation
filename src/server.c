@@ -121,11 +121,19 @@ int main()
         {
             case e_INIT:
             printf("Init Dictionary");
-            initDictionary(root, &checkIfInit);
+            initDictionary(&root, &checkIfInit);
             break;
             
             case e_ADDWORD:
             printf("Add word <%s>", word);
+            if(checkIfInit)
+            {
+                insertWord(&root, word);
+            }
+            else
+            {
+                printf(" cannot be executed, initialize dictionary first");
+            }
             break;
 
             case e_ADDDEF:
@@ -138,6 +146,14 @@ int main()
 
             case e_SHOW:
             printf("Show Dictionary");
+            if(checkIfInit)
+            {
+                showDictionary(root);
+            }
+            else
+            {
+                printf(" cannot be executed, initialize dictionary first");
+            }
             break;
 
             default:
