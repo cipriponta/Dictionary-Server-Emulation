@@ -1,9 +1,6 @@
 // ***************************************************************************************************
 //  ToDo:
-//  Server  - Dictionary Functionality
-//              - Dictionary Structure (alphabetically ordered linked list)
-//              - Client Feedback
-//          - Add threads
+//  Server - Add threads
 // ***************************************************************************************************
 
 #include "dependencies.h"
@@ -100,6 +97,8 @@ int main()
         char *word;
         char *definition;
 
+        strcpy(clientFeedbackMessageBuffer, "");
+
         socketSize = sizeof(struct sockaddr_in);
         if((newsocketfd = accept(socketfd, (struct sockaddr *)&clientAddress, &socketSize)) == -1)
         {
@@ -116,43 +115,86 @@ int main()
         }
         clientMessageBuffer[clientMessageBufferLength] = '\0';
 
-        printf("Command from client: ");
         switch(parseClientMessage(clientMessageBuffer, &word, &definition))
         {
             case e_INIT:
-            printf("Init Dictionary");
+            strcat(clientFeedbackMessageBuffer, "Init Dictionary");
             initDictionary(&root, &checkIfInit);
             break;
             
             case e_ADDWORD:
-            printf("Add word <%s>", word);
-            if(checkIfInit)
+            if(!checkIfInit)
             {
-                insertWord(&root, word);
+                strcat(clientFeedbackMessageBuffer, "Init dictionary first");
+                
+            }
+            else if(checkWordInDictionary(root, word))
+            {
+                strcat(clientFeedbackMessageBuffer, "Word <");
+                strcat(clientFeedbackMessageBuffer, word);
+                strcat(clientFeedbackMessageBuffer, "> is already in the dictionary");
             }
             else
             {
-                printf(" cannot be executed, initialize dictionary first");
+                insertWord(&root, word);
+                strcat(clientFeedbackMessageBuffer, "Word <");
+                strcat(clientFeedbackMessageBuffer, word);
+                strcat(clientFeedbackMessageBuffer, "> was added");
             }
             break;
 
             case e_ADDDEF:
-            printf("Add word <%s> with definition <%s>", word, definition);
-            break;
-
-            case e_DELETE:
-            printf("Delete word <%s>", word);
-            break;
-
-            case e_SHOW:
-            printf("Show Dictionary");
-            if(checkIfInit)
+            if(!checkIfInit)
             {
-                showDictionary(root);
+                strcat(clientFeedbackMessageBuffer, "Init dictionary first");
+                
+            }
+            else if(!checkWordInDictionary(root, word))
+            {
+                strcat(clientFeedbackMessageBuffer, "Word <");
+                strcat(clientFeedbackMessageBuffer, word);
+                strcat(clientFeedbackMessageBuffer, "> is not in the dictionary");
             }
             else
             {
-                printf(" cannot be executed, initialize dictionary first");
+                modifiyWordDefinition(&root, word, definition);
+                strcat(clientFeedbackMessageBuffer, "Word <");
+                strcat(clientFeedbackMessageBuffer, word);
+                strcat(clientFeedbackMessageBuffer, "> has now the definition <");
+                strcat(clientFeedbackMessageBuffer, definition);
+                strcat(clientFeedbackMessageBuffer, ">");
+            }
+            break;
+
+            case e_DELETE:
+            if(!checkIfInit)
+            {
+                strcat(clientFeedbackMessageBuffer, "Init dictionary first");
+                
+            }
+            else if(!checkWordInDictionary(root, word))
+            {
+                strcat(clientFeedbackMessageBuffer, "Word <");
+                strcat(clientFeedbackMessageBuffer, word);
+                strcat(clientFeedbackMessageBuffer, "> is not in the dictionary");
+            }
+            else
+            {
+                deleteWord(&root, word);
+                strcat(clientFeedbackMessageBuffer, "Word <");
+                strcat(clientFeedbackMessageBuffer, word);
+                strcat(clientFeedbackMessageBuffer, "> was deleted");
+            }
+            break;
+
+            case e_SHOW:
+            if(checkIfInit)
+            {
+                showDictionary(root, clientFeedbackMessageBuffer);
+            }
+            else
+            {
+                strcat(clientFeedbackMessageBuffer, "Init dictionary first");
             }
             break;
 
@@ -160,7 +202,11 @@ int main()
             showMessageError("Server Unknown Option From Client Error");
             break;
         }
-        printf("\n\n");
+
+        if(send(newsocketfd, clientFeedbackMessageBuffer, strlen(clientFeedbackMessageBuffer), 0) == -1)
+        {
+            showMessageError("Server Send Feedback To Client Error");
+        }
 
         close(newsocketfd);
     }

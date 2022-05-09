@@ -2,7 +2,7 @@
 
 void showClientMenuMessageError()
 {
-    printf("Wrong Parameters Numbers, choose one of the following commands:\n");
+    printf("Wrong Parameters, choose one of the following commands:\n");
     printf("Add word:           ./runServer <hostname> a <word>\n");
     printf("Add word:           ./runServer <hostname> A <word>\n");
     printf("Add definition:     ./runServer <hostname> d <word> <definition>\n");
@@ -15,8 +15,8 @@ int main(int argc, char *argv[])
 {
     int socketfd;
     char messageBuffer[MAXBUFFERSIZE];
-    char serverFeedbackBuffer[MAXBUFFERSIZE];
-    int serverFeedbackBufferLength;
+    char serverFeedbackMessageBuffer[MAXBUFFERSIZE];
+    int serverFeedbackMessageBufferLength;
     struct hostent *server;
     struct sockaddr_in serverAddress;
 
@@ -68,8 +68,12 @@ int main(int argc, char *argv[])
     {
         showMessageError("Client Send Error");
     }
-    
-    printf("Sent Message: %s\n", messageBuffer);
+
+    if((serverFeedbackMessageBufferLength = recv(socketfd, serverFeedbackMessageBuffer, MAXBUFFERSIZE - 1, 0)) == -1)
+    {
+        perror("Server Receive Message From Client Error");
+    }
+    printf("%s\n", serverFeedbackMessageBuffer);
 
     close(socketfd);
 

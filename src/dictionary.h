@@ -11,9 +11,10 @@ typedef struct dictionaryNode
 }dictionaryNode;
 
 void initDictionary(dictionaryNode **root, int *checkIfInit);
+int checkWordInDictionary(dictionaryNode *root, char *word);
 void insertWord(dictionaryNode **root, char *word);
-void modifiyWord(dictionaryNode **root, char *word, char *definition);
+void modifiyWordDefinition(dictionaryNode **root, char *word, char *definition);
 void deleteWord(dictionaryNode **root, char *word);
-void showDictionary(dictionaryNode *root);
+void showDictionary(dictionaryNode *root, char *clientFeedbackMessageBuffer);
 
 #endif

@@ -6,6 +6,21 @@ void initDictionary(dictionaryNode **root, int *checkIfInit)
     *checkIfInit = 1;
 }
 
+int checkWordInDictionary(dictionaryNode *root, char *word)
+{
+    dictionaryNode *i = root;
+
+    while(i != NULL)
+    {
+        if(strcmp(i->word, word) == 0)
+        {
+            return 1;
+        }
+        i = i->next;
+    }
+    return 0;
+}
+
 void insertWord(dictionaryNode **root, char *word)
 {
     dictionaryNode *node;
@@ -36,13 +51,62 @@ void insertWord(dictionaryNode **root, char *word)
     }
 }
 
-void showDictionary(dictionaryNode *root)
+void modifiyWordDefinition(dictionaryNode **root, char *word, char *definition)
+{
+    dictionaryNode *i = *root;
+
+    while(i != NULL)
+    {
+        if(strcmp(i->word, word) == 0)
+        {
+            strcpy(i->definition, definition);
+        }
+        i = i->next;
+    }
+}
+
+void deleteWord(dictionaryNode **root, char *word)
+{
+    dictionaryNode *p, *q;
+
+    if((*root) != NULL)
+    {
+        if(strcmp((*root)->word, word) == 0)
+        {
+            p = *root;
+            *root = (*root)->next;
+            free(p);
+        }
+        else
+        {
+            q = *root;
+            
+            while(q->next != NULL && strcmp(q->next->word, word) != 0)
+            {
+                q = q->next;
+            }
+
+            if(q->next != NULL && strcmp(q->next->word, word) == 0)
+            {
+                p = q->next;
+                q->next = q->next->next;
+                free(p);
+            }
+        }
+    }
+}
+
+void showDictionary(dictionaryNode *root, char *clientFeedbackMessageBuffer)
 {
     dictionaryNode *i = root;
 
     while(i != NULL)
     {
-        printf("\n<%s> - <%s>", i->word, i->definition);
+        strcat(clientFeedbackMessageBuffer, "<");
+        strcat(clientFeedbackMessageBuffer, i->word);
+        strcat(clientFeedbackMessageBuffer, "> - <");
+        strcat(clientFeedbackMessageBuffer, i->definition);
+        strcat(clientFeedbackMessageBuffer, ">\n");
         i = i->next;
     }
 }
