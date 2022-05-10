@@ -14,6 +14,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <pthread.h>
 
 #define USED_PORT       5000
 #define BACKLOG         10

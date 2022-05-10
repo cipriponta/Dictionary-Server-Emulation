@@ -1,8 +1,3 @@
-// ***************************************************************************************************
-//  ToDo:
-//  Server - Add threads
-// ***************************************************************************************************
-
 #include "dependencies.h"
 #include "dictionary.h"
 
@@ -18,6 +13,7 @@ typedef enum clientOptionEnum
 
 static dictionaryNode *root;
 static int checkIfInit = 0;
+static pthread_mutex_t mutex;
 
 clientOptionEnum parseClientMessage(char *clientMessage, char **word, char **definition)
 {
@@ -29,22 +25,38 @@ clientOptionEnum parseClientMessage(char *clientMessage, char **word, char **def
     if(clientMessage[0] == 'a' || clientMessage[0] == 'A')
     {
         strtok(clientMessage, "|");
-        *word = strtok(NULL, "|");
+        if((*word = strtok(NULL, "|")) == NULL)
+        {
+            *word = (char*)malloc(sizeof(char) * 2);
+            strcpy(*word, "");
+        }
         return e_ADDWORD;
     }
 
     if(clientMessage[0] == 'd')
     {
         strtok(clientMessage, "|");
-        *word = strtok(NULL, "|");
-        *definition = strtok(NULL, "|");
+        if((*word = strtok(NULL, "|")) == NULL)
+        {
+            *word = (char*)malloc(sizeof(char) * 2);
+            strcpy(*word, "");
+        }
+        if((*definition = strtok(NULL, "|")) == NULL)
+        {
+            *definition = (char*)malloc(sizeof(char) * 2);
+            strcpy(*definition, "");
+        }
         return e_ADDDEF;
     }
 
     if(clientMessage[0] == 's')
     {
         strtok(clientMessage, "|");
-        *word = strtok(NULL, "|");
+        if((*word = strtok(NULL, "|")) == NULL)
+        {
+            *word = (char*)malloc(sizeof(char) * 2);
+            strcpy(*word, "");
+        }
         return e_DELETE;
     }
 
@@ -56,7 +68,7 @@ clientOptionEnum parseClientMessage(char *clientMessage, char **word, char **def
     return e_NONE;
 }
 
-void connectionHandler(void *arg)
+void *connectionHandler(void *arg)
 {
     int newsocketfd = *((int*) arg);
     char clientMessageBuffer[MAXBUFFERSIZE];
@@ -65,6 +77,7 @@ void connectionHandler(void *arg)
     char *word;
     char *definition;
 
+    pthread_mutex_lock(&mutex);
     strcpy(clientFeedbackMessageBuffer, "");
 
     if((clientMessageBufferLength = recv(newsocketfd, clientMessageBuffer, MAXBUFFERSIZE - 1, 0)) == -1)
@@ -166,7 +179,9 @@ void connectionHandler(void *arg)
         showMessageError("Server Send Feedback To Client Error");
     }
 
+    pthread_mutex_unlock(&mutex);
     close(newsocketfd);
+    pthread_exit(NULL);
 }
 
 int main()
@@ -177,6 +192,8 @@ int main()
     struct sockaddr_in clientAddress;
     int socketSize;
     int checkSock = 1;
+    pthread_t thread[BACKLOG];
+    int threadIndex = 0;
 
     if((socketfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
@@ -214,8 +231,13 @@ int main()
 
         printf("New connection from: %s\n", inet_ntoa(clientAddress.sin_addr));
 
-        connectionHandler((void*)&newsocketfd);
+        if(pthread_create(&thread[threadIndex++], NULL, connectionHandler, (void *) &newsocketfd) != 0)
+        {
+            showMessageError("Server Thread Error");
+        }
     }
 
+    pthread_mutex_destroy(&mutex);
+    pthread_exit(NULL);
     return 0;
 }
