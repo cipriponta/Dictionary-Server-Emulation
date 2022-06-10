@@ -1,1 +1,1 @@
-## University project for RC
+## University project for Computer Networks
